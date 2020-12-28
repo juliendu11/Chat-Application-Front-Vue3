@@ -1,0 +1,18 @@
+.home-page {
+
+    .card {
+        padding: 20px 0;
+    }
+
+}
+
+.direct-chat-rooms-list{
+    display: flex;
+    flex-direction: column;
+}
+
+.direct-chat-container {
+    display: grid;
+    grid-template-columns: minmax(150px, 25%) 1fr;
+    column-gap: 50px;
+}

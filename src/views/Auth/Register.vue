@@ -1,40 +1,43 @@
 <template>
   <div class="register-page">
     <div class="container">
-      <div class="card">
-        <form action="">
-          <h2>REGISTER</h2>
-          <div class="card-content">
+      <form @submit.prevent="processToRegister">
+        <Card>
+          <template v-slot:header>
+            <h2>REGISTER</h2>
+          </template>
+          <template v-slot:content>
             <div class="form-control">
               <input
-                v-model="state.id"
+                v-model="state.username"
                 type="text"
                 placeholder="Username"
               />
             </div>
             <div class="form-control">
-              <input
-                v-model="state.email"
-                type="text"
-                placeholder="Email"
-              />
+              <input v-model="state.email" type="text" placeholder="Email" />
             </div>
-             <div class="form-control">
+            <div class="form-control">
               <input
                 v-model="state.password"
                 type="password"
                 placeholder="Password"
+                @keypress="keyPressHandler"
               />
             </div>
-          </div>
-          <div class="card-actions">
-            <a href="#" class="btn btn-primary" @click="processToRegister"
-              >Create account</a
+          </template>
+          <template v-slot:actions>
+            <input
+              class="btn btn-primary strong-text"
+              type="submit"
+              value="Create account"
+            />
+            <a href="#" class="btn btn-light strong-text" @click="gotoLogin"
+              >Go to login</a
             >
-            <a href="#" class="btn btn-light" @click="gotoLogin">Login</a>
-          </div>
-        </form>
-      </div>
+          </template>
+        </Card>
+      </form>
     </div>
   </div>
 </template>
@@ -43,7 +46,7 @@
 import { defineComponent, reactive, getCurrentInstance } from 'vue'
 import { useRouter } from 'vue-router'
 import { register } from '@/services/api.service'
-import { updateToken } from '@/services/token.service'
+import DialogManager from '@/classes/DialogManager'
 
 export default defineComponent({
   name: 'Register',
@@ -56,22 +59,27 @@ export default defineComponent({
       password: ''
     })
 
+    const dialogMananger = new DialogManager(instance)
+
     const processToRegister = async () => {
-      const { error, message } = await register(
-        state.username,
-        state.email,
-        state.password
-      )
-      if (error) {
-        if (instance) {
-          instance.appContext.config.globalProperties.$showSwalError(
-            message,
-            'Error during registration'
-          )
+      try {
+        dialogMananger.showLoadingDialog('')
+        const { error, message } = await register(
+          state.username,
+          state.email,
+          state.password
+        )
+        if (error) {
+          dialogMananger.showErrorMessage(message, 'Error during registration')
+          return
         }
-        return
+        dialogMananger.showSuccessMessage(message)
+      } catch (error) {
+        dialogMananger.showErrorMessage(
+          error.message,
+          'Error during registration'
+        )
       }
-      if (instance) { instance.appContext.config.globalProperties.$showSwalSuccess(message) }
     }
 
     const gotoLogin = () => {

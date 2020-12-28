@@ -6,6 +6,8 @@ import store from './store'
 
 import Swal from 'sweetalert2'
 
+import Card from './components/Card.vue'
+
 import './assets/styles/app.scss'
 
 const app = createApp(App)
@@ -13,7 +15,8 @@ const app = createApp(App)
 const swalWithCustomButtons = Swal.mixin({
   customClass: {
     confirmButton: 'btn btn-primary',
-    cancelButton: 'btn btn-danger'
+    cancelButton: 'btn btn-danger',
+    content: 'normal-text'
   },
   buttonsStyling: false
 })
@@ -44,6 +47,21 @@ app.config.globalProperties.$showSwalInfo = (text: string, title = '') => {
     heightAuto: false
   })
 }
+
+app.config.globalProperties.$showSwalProgress = (text: string, callback: Function, title = '') => {
+  swalWithCustomButtons.fire({
+    title: title || 'Please wait...',
+    text: text,
+    allowOutsideClick: false
+  })
+  swalWithCustomButtons.showLoading()
+}
+
+app.config.globalProperties.$forceCloseSwal = () => {
+  swalWithCustomButtons.close()
+}
+
+app.component('Card', Card)
 
 app.use(store)
 app.use(router)

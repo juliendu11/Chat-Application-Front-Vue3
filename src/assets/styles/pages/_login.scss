@@ -1,7 +1,10 @@
 .login-page,
-.register-page {
+.register-page,
+.verify-page {
     display: flex;
     justify-content: center;
     align-items: center;
     padding-top: 120px;
+
+    font-weight: 700;
 }
