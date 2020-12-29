@@ -3,12 +3,15 @@ import App from './App.vue'
 import './registerServiceWorker'
 import router from './router'
 import store from './store'
+import { clearToken } from './services/token.service'
 
 import Swal from 'sweetalert2'
 
 import Card from './components/Card.vue'
 
 import './assets/styles/app.scss'
+
+require('dotenv').config()
 
 const app = createApp(App)
 
@@ -59,6 +62,11 @@ app.config.globalProperties.$showSwalProgress = (text: string, callback: Functio
 
 app.config.globalProperties.$forceCloseSwal = () => {
   swalWithCustomButtons.close()
+}
+
+app.config.globalProperties.$forceLogout = () => {
+  clearToken()
+  router.push('/')
 }
 
 app.component('Card', Card)

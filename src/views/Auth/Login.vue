@@ -19,6 +19,7 @@
                 v-model="state.password"
                 type="password"
                 placeholder="Password"
+                autocomplete="current-password"
               />
               <a
                 href="#"
@@ -69,13 +70,14 @@ export default defineComponent({
     const processToLogin = async () => {
       try {
         dialogMananger.showLoadingDialog('')
-        const { error, message } = await login(state.id, state.password)
+        const { error, message, value } = await login(state.id, state.password)
         if (error) {
           dialogMananger.showErrorMessage(message, 'Error during login')
           return
         }
         updateToken(message)
         dialogMananger.forceClose()
+        localStorage.setItem('username', value)
         router.push({
           name: 'Home'
         })

@@ -4,6 +4,7 @@
     position: relative;
 
     input[type=text] ,
+    textarea,
     input[type=password] {
         margin: 10px 0;
         height: 40px;
@@ -12,6 +13,11 @@
 
         font-weight: 400;
     }
+
+    textarea{
+        padding: 10px;
+    }
+
 }
 
 input[type=submit]{

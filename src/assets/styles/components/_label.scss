@@ -1,0 +1,23 @@
+.label {
+    padding: 5px;
+    border-radius: 15px;
+    margin: 10px;
+}
+
+.label-primary {
+    background-color:var(--primary);
+    color:white;
+}
+
+.label-seconday {
+    background-color:var(--secondary);
+    color:white;
+}
+
+.label-primary-light {
+   color:var(--primary);
+}
+
+.label-secondary-light {
+    color:var(--secondary);
+}

@@ -1,7 +1,7 @@
-const TOKEN_NAME = 'jwt'
+import { JWT_TOKEN_NAME } from '@/config'
 
 const updateToken = (token: string) => {
-  localStorage.setItem(TOKEN_NAME, token)
+  localStorage.setItem(JWT_TOKEN_NAME, token)
 }
 
 const clearToken = () => {
@@ -9,7 +9,7 @@ const clearToken = () => {
 }
 
 const getToken = (): string => {
-  return localStorage.getItem(TOKEN_NAME) || ''
+  return localStorage.getItem(JWT_TOKEN_NAME) || ''
 }
 
 export {

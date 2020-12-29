@@ -1,8 +1,28 @@
+import { getCurrentInstance } from 'vue'
 import { getToken } from './token.service'
-const API_URL = 'http://localhost:3000/api'
+import { API_URL } from '@/config'
+import APIResponse from '@/interfaces/APIResponse'
+import APIResponseWithValue from '@/interfaces/APIResponseWithValue'
+import Room from '@/interfaces/Room'
+import Message from '@/interfaces/Message'
+import GetRoomMessages from '@/interfaces/APIResponsesEntity/GetRoomMessages'
 
-const login = async (id: string, password: string) => {
-  const data = await fetch(API_URL + '/auth/login', {
+const requestHandler = async (url: string, options: RequestInit|undefined) => {
+  const vueInstance = getCurrentInstance()
+
+  const data = await fetch(url, options)
+
+  const result = await data.json()
+  if (result.error && result.message === 'jwt expired') {
+    if (vueInstance) {
+      vueInstance.appContext.config.globalProperties.$forceLogout()
+    }
+  }
+  return result
+}
+
+const login = async (id: string, password: string): Promise<APIResponseWithValue<string>> => {
+  const { error, message, value } = await requestHandler(API_URL + '/auth/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -13,16 +33,15 @@ const login = async (id: string, password: string) => {
     })
   })
 
-  const { error, message } = await data.json()
-
   return {
     error,
-    message
+    message,
+    value
   }
 }
 
-const register = async (username: string, email: string, password: string) => {
-  const data = await fetch(API_URL + '/auth/register', {
+const register = async (username: string, email: string, password: string): Promise<APIResponseWithValue<string>> => {
+  const { error, message, value } = await requestHandler(API_URL + '/auth/register', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -34,16 +53,15 @@ const register = async (username: string, email: string, password: string) => {
     })
   })
 
-  const { error, message } = await data.json()
-
   return {
     error,
-    message
+    message,
+    value
   }
 }
 
-const verify = async (email: string, token: string) => {
-  const data = await fetch(API_URL + '/auth/verify', {
+const verify = async (email: string, token: string): Promise<APIResponse> => {
+  const { error, message } = await requestHandler(API_URL + '/auth/verify', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -54,16 +72,14 @@ const verify = async (email: string, token: string) => {
     })
   })
 
-  const { error, message } = await data.json()
-
   return {
     error,
     message
   }
 }
 
-const forgotPassword = async (email: string) => {
-  const data = await fetch(API_URL + '/auth/forgot-password', {
+const forgotPassword = async (email: string): Promise<APIResponse> => {
+  const { error, message } = await requestHandler(API_URL + '/auth/forgot-password', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -73,16 +89,14 @@ const forgotPassword = async (email: string) => {
     })
   })
 
-  const { error, message } = await data.json()
-
   return {
     error,
     message
   }
 }
 
-const resetPassword = async (email: string, token: string, password: string) => {
-  const data = await fetch(API_URL + '/auth/reset-password', {
+const resetPassword = async (email: string, token: string, password: string): Promise<APIResponse> => {
+  const { error, message } = await requestHandler(API_URL + '/auth/reset-password', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -94,16 +108,14 @@ const resetPassword = async (email: string, token: string, password: string) => 
     })
   })
 
-  const { error, message } = await data.json()
-
   return {
     error,
     message
   }
 }
 
-const getRooms = async () => {
-  const data = await fetch(API_URL + '/room', {
+const getRooms = async (): Promise<APIResponseWithValue<Room[]>> => {
+  const { error, message, values } = await requestHandler(API_URL + '/room', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -111,12 +123,62 @@ const getRooms = async () => {
     }
   })
 
-  const { error, message, values } = await data.json()
-  console.log(values)
   return {
     error,
     message,
-    values
+    value: values
+  }
+}
+
+const refreshToken = async (): Promise<APIResponseWithValue<string>> => {
+  const { error, message, value } = await requestHandler(API_URL + '/auth/token', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      authorization: 'Bearer ' + getToken()
+    }
+  })
+
+  return {
+    error,
+    message,
+    value
+  }
+}
+
+const getRoomMessages = async (roomName: string, skip: number, limit: number): Promise<APIResponseWithValue<GetRoomMessages>> => {
+  const { error, message, values } = await requestHandler(`${API_URL}/message/${roomName}?skip=${skip}&limit=${limit}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      authorization: 'Bearer ' + getToken()
+    }
+  })
+
+  return {
+    error,
+    message,
+    value: values
+  }
+}
+
+const createNewRoom = async (roomName: string, isPrivate: boolean, password: string): Promise<APIResponseWithValue<Room>> => {
+  const { error, message, value } = await requestHandler(API_URL + '/room', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      roomName,
+      isPrivate,
+      password
+    })
+  })
+
+  return {
+    error,
+    message,
+    value
   }
 }
 
@@ -126,5 +188,8 @@ export {
   verify,
   forgotPassword,
   resetPassword,
-  getRooms
+  getRooms,
+  refreshToken,
+  getRoomMessages,
+  createNewRoom
 }

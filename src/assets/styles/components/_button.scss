@@ -1,9 +1,10 @@
 .btn {
     cursor: pointer;
-    padding: 10px 50px;
+    padding: 10px 1rem;
     margin: 10px;
 
     border-radius: 9999px;
+
 
     &:focus{
       outline: none;
@@ -41,15 +42,40 @@
   color: white;
 }
 
-.btn-light {
+%btn-light {
   background: white;
-  color: black;
-
   &:hover {
-     filter: brightness(0.9);
-  }
+    filter: brightness(0.9);
+ }
 }
 
+.btn-light {
+  @extend %btn-light;
+  background: white;
+  color: black;
+}
+
+.btn-danger-light {
+  @extend %btn-light;
+  color: var(--danger);
+}
+
+.btn-primary-light {
+  @extend %btn-light;
+  color: var(--primary);
+}
+
+.btn-medium{
+  font-size: 13px!important;
+  padding: 10px 20px;
+}
+
+
 .btn-small{
-  font-size: 10px;
+  font-size: 10px!important;
+  padding: 5px 20px;
+}
+
+.btn-block{
+  width: 100%;
 }

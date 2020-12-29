@@ -6,14 +6,20 @@ The back part is here: https://github.com/juliendu11/Chat-Application-Back-Expre
 
 ## TODO
 
-- [] Enforce typescript because is not full typescript
+- [X] Enforce typescript because is not full typescript
 - [] Add unit tests
 - [] Add e2e tests
-- [] Refresh jwt token before expiration
+- [X] Refresh jwt token before expiration
 - [] Add private message
 - [] Show all member registered not just online
 - [] Sending image
-- [] Add ent for API URL
+- [X] Add env for API URL
+- [] Add support push notification (PWA)
+- [] Email format vérification for Auth page
+- [] Add retype password for register page
+- [X] Add users list connected per room
+- [] Add logout
+- [] Load more messages when scroll in TOP
 
 ## Project setup
 ```

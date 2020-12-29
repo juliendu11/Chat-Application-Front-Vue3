@@ -3,10 +3,13 @@ a {
     color: inherit;
 }
 
-input{
+input, textarea{
     border: none;
     outline: none;
     filter: brightness(0.95);
+}
+
+button {
 }
 
 p{
