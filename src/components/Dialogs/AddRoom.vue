@@ -24,12 +24,14 @@
     <template v-slot:actions>
       <div>
         <a
+        id="addRoomAddBtn"
           href="#"
           class="btn btn-primary-light strong-text"
           @click="accept(true)"
           >Add</a
         >
         <a
+        id="addRoomCancelBtn"
           href="#"
           class="btn btn-danger-light strong-text"
           @click="accept(false)"

@@ -11,12 +11,14 @@
     <template v-slot:actions>
       <div>
         <a
+        id="changePrivateRoomAccedBtn"
           href="#"
           class="btn btn-primary-light strong-text"
           @click="accept(true)"
           >Acced</a
         >
         <a
+          id="changePrivateRoomCancelBtn"
           href="#"
           class="btn btn-danger-light strong-text"
           @click="accept(false)"

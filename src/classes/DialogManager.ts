@@ -7,11 +7,6 @@ class DialogManager {
       this.Instance = instance
     }
 
-    public setVueInstance (instance: ComponentInternalInstance) {
-      this.Instance = instance
-      return this
-    }
-
     public showErrorMessage (msg: string, title = '') {
       if (this.Instance) {
         this.Instance.appContext.config.globalProperties.$showSwalError(

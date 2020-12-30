@@ -174,7 +174,7 @@ export default defineComponent({
       sendMessage
     } = MessageManager(
       () => state,
-      pagination,
+      () => pagination,
       dialogMananger,
       myUsername)
 

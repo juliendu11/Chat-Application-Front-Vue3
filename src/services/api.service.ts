@@ -4,7 +4,6 @@ import { API_URL } from '@/config'
 import APIResponse from '@/interfaces/APIResponse'
 import APIResponseWithValue from '@/interfaces/APIResponseWithValue'
 import Room from '@/interfaces/Room'
-import Message from '@/interfaces/Message'
 import GetRoomMessages from '@/interfaces/APIResponsesEntity/GetRoomMessages'
 
 const requestHandler = async (url: string, options: RequestInit|undefined) => {

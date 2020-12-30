@@ -5,7 +5,7 @@ const updateToken = (token: string) => {
 }
 
 const clearToken = () => {
-  localStorage.clear()
+  localStorage.removeItem(JWT_TOKEN_NAME)
 }
 
 const getToken = (): string => {

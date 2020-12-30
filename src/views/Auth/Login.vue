@@ -12,7 +12,7 @@
           </template>
           <template v-slot:content>
             <div class="form-control">
-              <label for="id">Usernme or email:</label>
+              <label for="id">Username or email:</label>
               <Field
                 name="id"
                 id="id"
