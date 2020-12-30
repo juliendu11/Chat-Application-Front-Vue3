@@ -1,29 +1,36 @@
 <template>
   <div class="login-page">
     <div class="container">
-      <form @submit.prevent="processToLogin">
+      <Form
+        @submit="processToLogin"
+        :validation-schema="schema"
+        v-slot="{ errors }"
+      >
         <Card>
           <template v-slot:header>
-             <h2>LOGIN</h2>
+            <h2>LOGIN</h2>
           </template>
           <template v-slot:content>
-           <div class="form-control">
-              <input
-                v-model="state.id"
+            <div class="form-control">
+              <Field
+                name="id"
                 type="text"
-                placeholder="Username or email"
+                v-model="state.id"
+                :class="{ 'is-invalid': errors.id }"
               />
+              <div class="invalid-feedback">{{ errors.id }}</div>
             </div>
             <div class="form-control">
-              <input
-                v-model="state.password"
+              <Field
+                name="password"
                 type="password"
-                placeholder="Password"
-                autocomplete="current-password"
+                v-model="state.password"
+                :class="{ 'is-invalid': errors.password }"
               />
+              <div class="invalid-feedback">{{ errors.password }}</div>
             </div>
             <div class="form-control">
-               <a
+              <a
                 href="#"
                 class="btn btn-small btn-light"
                 @click="gotoForgotPassword"
@@ -45,29 +52,39 @@
             >
           </template>
         </Card>
-      </form>
+      </Form>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, reactive, getCurrentInstance } from 'vue'
+import { Form, Field } from 'vee-validate'
+import * as Yup from 'yup'
+
 import { useRouter } from 'vue-router'
 import { login } from '@/services/api.service'
 import { updateToken } from '@/services/token.service'
 import DialogManager from '@/classes/DialogManager'
 
+import LoginState from '@/interfaces/State/LoginState'
 export default defineComponent({
   name: 'Login',
+  components: { Form, Field },
   setup () {
     const router = useRouter()
     const instance = getCurrentInstance()
-    const state = reactive({
+    const state = reactive<LoginState>({
       id: '',
       password: ''
     })
 
     const dialogMananger = new DialogManager(instance)
+
+    const schema = Yup.object().shape({
+      id: Yup.string().required('Username or email is required'),
+      password: Yup.string().required('Password is required')
+    })
 
     const processToLogin = async () => {
       try {
@@ -100,7 +117,13 @@ export default defineComponent({
       })
     }
 
-    return { state, processToLogin, gotoCreateAccount, gotoForgotPassword }
+    return {
+      state,
+      processToLogin,
+      gotoCreateAccount,
+      gotoForgotPassword,
+      schema
+    }
   }
 })
 </script>

@@ -59,7 +59,7 @@
         </Card>
         <Card>
           <template v-slot:content>
-            <div class="direct-chat-messages-list" id="messagesList">
+            <div @scroll="messagesScrolling" class="direct-chat-messages-list" id="messagesList">
               <MessageCard
                 v-for="(message, i) in state.messages"
                 :key="i"
@@ -127,10 +127,12 @@ import Message from '@/interfaces/Message'
 import MemberOnline from '@/interfaces/MemberOnline'
 import AddRoomResult from '@/interfaces/DialogResult/AddRoom'
 import ChangePrivateRoomResult from '@/interfaces/DialogResult/ChangePrivateRoom'
-import HomeState from '@/interfaces/HomeState'
+import HomeState from '@/interfaces/State/HomeState'
 import Pagination from '@/interfaces/Pagination'
 import Dialog from '@/interfaces/Dialog'
 import Room from '@/interfaces/Room'
+
+import { throttle } from '@/utils/scrolling'
 
 export default defineComponent({
   name: 'Home',
@@ -162,9 +164,10 @@ export default defineComponent({
     })
 
     const pagination = reactive<Pagination>({
-      limit: 10,
+      limit: 5,
       skip: 0,
-      moreAvailable: true
+      moreAvailable: true,
+      page: 1
     })
 
     const autoScroll = (el: HTMLElement | null) => {
@@ -185,7 +188,7 @@ export default defineComponent({
         dialogMananger.showErrorMessage(message)
         return
       }
-      state.messages = value.messages
+      state.messages = [...state.messages, ...value.messages]
       pagination.moreAvailable = value.moreAvailable
     }
 
@@ -217,6 +220,7 @@ export default defineComponent({
       if (!state.socketIOClient) {
         return
       }
+      state.messages = []
       state.roomSelected = room
       await getMessages()
 
@@ -343,6 +347,32 @@ export default defineComponent({
       state.messages = [...state.messages, newMsg]
     }
 
+    const loadMore = async () => {
+      pagination.page += 1
+      pagination.skip =
+        pagination.limit * pagination.page -
+        pagination.limit
+      await getMessages()
+    }
+
+    const messageInfiniteScrolling = async () => {
+      const element = document.querySelector('#messagesList')
+      if (element && element.scrollTop === 0 && pagination.moreAvailable) {
+        try {
+          await loadMore()
+          element.scroll({
+            top: 95 * 4,
+            left: 0,
+            behavior: 'smooth'
+          })
+        } catch (error) {
+          dialogMananger.showErrorMessage(error.message)
+        }
+      }
+    }
+
+    const messagesScrolling = throttle(messageInfiniteScrolling, 500)
+
     onMounted(async () => {
       if (!myUsername) {
         clearToken()
@@ -415,7 +445,8 @@ export default defineComponent({
       showDialogCreateRoom,
       acceptAddRoom,
       dialog,
-      acceptChangeRoom
+      acceptChangeRoom,
+      messagesScrolling
     }
   }
 })

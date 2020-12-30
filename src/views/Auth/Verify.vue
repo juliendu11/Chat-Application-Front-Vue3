@@ -26,6 +26,7 @@ import BounceLoader from 'vue-spinner/src/BounceLoader.vue'
 
 import DialogManager from '@/classes/DialogManager'
 
+import VerifyState from '@/interfaces/State/VerifyState'
 export default defineComponent({
   name: 'Register',
   components: { BounceLoader },
@@ -36,7 +37,7 @@ export default defineComponent({
 
     const dialogMananger = new DialogManager(instance)
 
-    const state = reactive({
+    const state = reactive<VerifyState>({
       loading: false,
       message: ''
     })

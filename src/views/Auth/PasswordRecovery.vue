@@ -1,18 +1,25 @@
 <template>
   <div class="login-page">
     <div class="container">
-      <form v-if="state.requested" @submit.prevent="processToRecoverPassword">
+      <Form
+        v-if="state.requested"
+        @submit="processToRecoverPassword"
+        :validation-schema="schema"
+        v-slot="{ errors }"
+      >
         <Card>
           <template v-slot:header>
             <h2>FORGOT PASSWORD</h2>
           </template>
           <template v-slot:content>
             <div class="form-control">
-              <input
-                v-model="state.id"
+              <Field
+                name="id"
                 type="text"
-                placeholder="Username or email"
+                v-model="state.id"
+                :class="{ 'is-invalid': errors.id }"
               />
+              <div class="invalid-feedback">{{ errors.id }}</div>
             </div>
           </template>
           <template v-slot:actions>
@@ -26,23 +33,30 @@
             >
           </template>
         </Card>
-      </form>
-      <form v-else @submit.prevent="processToUpdatePassword">
-          <Card>
+      </Form>
+      <Form
+        v-else
+        @submit="processToUpdatePassword"
+        :validation-schema="schema"
+        v-slot="{ errors }"
+      >
+        <Card>
           <template v-slot:header>
-             <h2>CHANGE PASSWORD</h2>
+            <h2>CHANGE PASSWORD</h2>
           </template>
           <template v-slot:content>
-             <div class="form-control">
-              <input
-                v-model="state.password"
+            <div class="form-control">
+              <Field
+                name="password"
                 type="password"
-                placeholder="Password"
+                v-model="state.password"
+                :class="{ 'is-invalid': errors.password }"
               />
+              <div class="invalid-feedback">{{ errors.password }}</div>
             </div>
           </template>
           <template v-slot:actions>
-           <input
+            <input
               class="btn btn-primary strong-text"
               type="submit"
               value="Update password"
@@ -52,25 +66,28 @@
             >
           </template>
         </Card>
-      </form>
+      </Form>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, reactive, getCurrentInstance, onMounted } from 'vue'
+import { Form, Field } from 'vee-validate'
+import * as Yup from 'yup'
 import { useRouter, useRoute } from 'vue-router'
 import { forgotPassword, resetPassword } from '@/services/api.service'
-import { updateToken } from '@/services/token.service'
 import DialogManager from '@/classes/DialogManager'
 
+import PasswordRecoveryState from '@/interfaces/State/PasswordRecoveryState'
 export default defineComponent({
   name: 'PasswordRecovery',
+  components: { Form, Field },
   setup () {
     const router = useRouter()
     const route = useRoute()
     const instance = getCurrentInstance()
-    const state = reactive({
+    const state = reactive<PasswordRecoveryState>({
       id: '',
       requested: true,
       password: '',
@@ -78,6 +95,14 @@ export default defineComponent({
     })
 
     const dialogMananger = new DialogManager(instance)
+
+    const schema = Yup.object().shape({
+      id: Yup.string().required('Username or email is required')
+    })
+
+    const schema2 = Yup.object().shape({
+      password: Yup.string().required('Password is required')
+    })
 
     const processToRecoverPassword = async () => {
       try {
@@ -136,7 +161,9 @@ export default defineComponent({
       state,
       processToRecoverPassword,
       processToUpdatePassword,
-      gotoLogin
+      gotoLogin,
+      schema,
+      schema2
     }
   }
 })

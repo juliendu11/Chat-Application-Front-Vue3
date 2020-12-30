@@ -1,29 +1,52 @@
 <template>
   <div class="register-page">
     <div class="container">
-      <form @submit.prevent="processToRegister">
+      <Form
+        @submit="processToRegister"
+        :validation-schema="schema"
+        v-slot="{ errors }"
+      >
         <Card>
           <template v-slot:header>
             <h2>REGISTER</h2>
           </template>
           <template v-slot:content>
             <div class="form-control">
-              <input
-                v-model="state.username"
+              <Field
+                name="username"
                 type="text"
-                placeholder="Username"
+                v-model="state.username"
+                :class="{ 'is-invalid': errors.username }"
               />
+              <div class="invalid-feedback">{{ errors.username }}</div>
             </div>
             <div class="form-control">
-              <input v-model="state.email" type="text" placeholder="Email" />
+               <Field
+               v-model="state.email"
+                name="email"
+                type="text"
+                :class="{ 'is-invalid': errors.email }"
+              />
+              <div class="invalid-feedback">{{ errors.email }}</div>
             </div>
             <div class="form-control">
-              <input
-                v-model="state.password"
+              <Field
+              v-model="state.password"
+                name="password"
                 type="password"
-                placeholder="Password"
-                @keypress="keyPressHandler"
+                :class="{ 'is-invalid': errors.password }"
+                ref="password"
               />
+              <div class="invalid-feedback">{{ errors.password }}</div>
+            </div>
+            <div class="form-control">
+              <Field
+              v-model="state.repassword"
+                name="confirmpassword"
+                type="password"
+                :class="{ 'is-invalid': errors.confirmPassword }"
+              />
+              <div class="invalid-feedback">{{ errors.confirmPassword }}</div>
             </div>
           </template>
           <template v-slot:actions>
@@ -37,26 +60,48 @@
             >
           </template>
         </Card>
-      </form>
+      </Form>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, reactive, getCurrentInstance } from 'vue'
+import { Form, Field } from 'vee-validate'
+import * as Yup from 'yup'
+
 import { useRouter } from 'vue-router'
 import { register } from '@/services/api.service'
 import DialogManager from '@/classes/DialogManager'
 
+import RegisterState from '@/interfaces/State/RegisterState'
 export default defineComponent({
   name: 'Register',
+  components: {
+    Form,
+    Field
+  },
   setup () {
     const router = useRouter()
     const instance = getCurrentInstance()
-    const state = reactive({
+    const state = reactive<RegisterState>({
       username: '',
       email: '',
+      repassword: '',
       password: ''
+    })
+
+    const schema = Yup.object().shape({
+      username: Yup.string().required('Username is required'),
+      email: Yup.string()
+        .required('Email is required')
+        .email('Email is invalid'),
+      password: Yup.string()
+        .min(6, 'Password must be at least 6 characters')
+        .required('Password is required'),
+      confirmPassword: Yup.string()
+        .oneOf([Yup.ref('password'), null], 'Passwords must match')
+        .required('Confirm Password is required')
     })
 
     const dialogMananger = new DialogManager(instance)
@@ -88,7 +133,7 @@ export default defineComponent({
       })
     }
 
-    return { state, processToRegister, gotoLogin }
+    return { state, processToRegister, gotoLogin, schema }
   }
 })
 </script>

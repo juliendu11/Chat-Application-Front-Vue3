@@ -19,7 +19,7 @@ The back part is here: https://github.com/juliendu11/Chat-Application-Back-Expre
 - [] Add retype password for register page
 - [X] Add users list connected per room
 - [X] Add logout
-- [] Load more messages when scroll in TOP
+- [X] Load more messages when scroll in TOP
 - [X] Private room
 
 ## Project setup

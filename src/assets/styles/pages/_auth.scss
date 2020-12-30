@@ -7,4 +7,12 @@
     padding-top: 120px;
 
     font-weight: 700;
+
+    @media only screen and (max-width: 693px) {
+       padding: 0;
+
+        .card {
+            box-shadow:none
+        }
+    }
 }
