@@ -14,7 +14,7 @@
         <div>
           <a
             href="#"
-            class="btn btn-secondary btn-medium"
+            class="btn btn-secondary btn-medium strong-text"
             @click.prevent="logout"
             >Logout</a
           >
@@ -99,40 +99,31 @@ import {
   watch,
   onBeforeUnmount
 } from 'vue'
-import { io } from 'socket.io-client'
+
 import { useRouter } from 'vue-router'
 
 import {
-  getRooms,
-  refreshToken,
-  getRoomMessages,
-  createNewRoom,
-  accedRoom
+  refreshToken
 } from '@/services/api.service'
-import { updateToken, getToken, clearToken } from '@/services/token.service'
+import { updateToken, clearToken } from '@/services/token.service'
 
-import { REFRESH_JWT_TIME, SOCKET_IO_URL } from '@/config'
+import { REFRESH_JWT_TIME } from '@/config'
 
 import DialogManager from '@/classes/DialogManager'
-import SocketError from '@/classes/SocketError'
-
-import SocketIOEventName from '@/enums/SocketIOEventName'
-import SocketIOErrorName from '@/enums/SocketIOErrorName'
 
 import MessageCard from '@/components/MessageCard.vue'
 import AddRoom from '@/components/Dialogs/AddRoom.vue'
 import ChangePrivateRoom from '@/components/Dialogs/ChangePrivateRoom.vue'
 
-import Message from '@/interfaces/Message'
-import MemberOnline from '@/interfaces/MemberOnline'
-import AddRoomResult from '@/interfaces/DialogResult/AddRoom'
-import ChangePrivateRoomResult from '@/interfaces/DialogResult/ChangePrivateRoom'
 import HomeState from '@/interfaces/State/HomeState'
 import Pagination from '@/interfaces/Pagination'
 import Dialog from '@/interfaces/Dialog'
-import Room from '@/interfaces/Room'
 
 import { throttle } from '@/utils/scrolling'
+
+import RoomManager from './RoomManage'
+import MessageManager from './MessageManage'
+import SocketManager from './SocketManage'
 
 export default defineComponent({
   name: 'Home',
@@ -177,33 +168,34 @@ export default defineComponent({
       }, 200)
     }
 
-    const getMessages = async () => {
-      if (!state.roomSelected) return
-      const { error, message, value } = await getRoomMessages(
-        state.roomSelected.name,
-        pagination.skip,
-        pagination.limit
-      )
-      if (error) {
-        dialogMananger.showErrorMessage(message)
-        return
-      }
-      state.messages = [...state.messages, ...value.messages]
-      pagination.moreAvailable = value.moreAvailable
-    }
+    const {
+      getMessages,
+      messageInfiniteScrolling,
+      sendMessage
+    } = MessageManager(
+      state,
+      pagination,
+      dialogMananger,
+      myUsername)
 
-    const getAllRooms = async () => {
-      try {
-        const { error, message, value } = await getRooms()
-        if (error) {
-          dialogMananger.showErrorMessage(message)
-          return
-        }
-        state.rooms = value
-      } catch (error) {
-        dialogMananger.showErrorMessage(error.message)
-      }
-    }
+    const {
+      showDialogChangeRoom,
+      showDialogCreateRoom,
+      acceptChangeRoom,
+      changeRoom,
+      acceptAddRoom,
+      getAllRooms
+    } = RoomManager(
+      state,
+      getMessages,
+      dialogMananger)
+
+    const {
+      createSocketIOClient
+    } = SocketManager(
+      state,
+      dialogMananger,
+      changeRoom)
 
     const activeJwtTokenRefresh = () => {
       refreshTokenTimer.value = setInterval(async () => {
@@ -214,161 +206,6 @@ export default defineComponent({
         }
         updateToken(value)
       }, REFRESH_JWT_TIME * 60 * 1000)
-    }
-
-    const changeRoom = async (room: Room) => {
-      if (!state.socketIOClient) {
-        return
-      }
-      state.messages = []
-      state.roomSelected = room
-      await getMessages()
-
-      state.socketIOClient.emit(
-        SocketIOEventName.ChangeRoom,
-        state.roomSelected.name
-      )
-    }
-
-    const handleSocketIOError = (socketError: SocketError) => {
-      dialogMananger.showErrorMessage(socketError.Message, socketError.Errorname)
-      if (socketError.Errorname === SocketIOErrorName.Unauthorized) {
-        changeRoom(state.rooms[0])
-      }
-    }
-
-    const setSocketIOEventHandler = () => {
-      if (!state.socketIOClient) return
-
-      state.socketIOClient.on(SocketIOEventName.MessageRoom, (msg: Message) => {
-        state.messages = [...state.messages, msg]
-      })
-      state.socketIOClient.on(
-        SocketIOEventName.OnlineMembers,
-        (members: MemberOnline[]) => {
-          state.onlineMembers = members
-        }
-      )
-      state.socketIOClient.on(
-        SocketIOEventName.UserJoinRoom,
-        (member: MemberOnline) => {
-          const m = state.onlineMembers.find(
-            (x) => x.username === member.username
-          )
-          if (m) {
-            m.room = member.room
-          } else {
-            state.onlineMembers = [...state.onlineMembers, member]
-          }
-        }
-      )
-      state.socketIOClient.on(
-        SocketIOEventName.UserConnected,
-        (member: MemberOnline) => {
-          state.onlineMembers = [...state.onlineMembers, member]
-        }
-      )
-      state.socketIOClient.on(
-        SocketIOEventName.UserDisconnected,
-        (member: MemberOnline) => {
-          state.onlineMembers = state.onlineMembers.filter(
-            (x) => x.username !== member.username
-          )
-        }
-      )
-      state.socketIOClient.on(SocketIOEventName.CreateRoom, (room: Room) => {
-        state.rooms = [...state.rooms, room]
-      })
-      state.socketIOClient.on(SocketIOEventName.Error, (socketError: SocketError) => {
-        handleSocketIOError(socketError)
-      })
-    }
-
-    const createSocketIOClient = () => {
-      if (!state.socketIOClient) {
-        state.socketIOClient = io(SOCKET_IO_URL, {
-          autoConnect: true,
-          reconnectionDelay: 2000,
-          transportOptions: {
-            polling: {
-              extraHeaders: {
-                Authorization: 'Bearer ' + getToken()
-              }
-            }
-          }
-        })
-      }
-      setSocketIOEventHandler()
-      if (state.socketIOClient.disconnected) {
-        state.socketIOClient.connect()
-      }
-    }
-
-    const acceptChangeRoom = async ({
-      value,
-      password
-    }: ChangePrivateRoomResult) => {
-      dialog.show = false
-      if (value && state.socketIOClient && state.pendingRoomSelected) {
-        const processAccedRoom = await accedRoom(state.pendingRoomSelected.name, password, state.socketIOClient.id)
-        if (processAccedRoom.error) {
-          dialogMananger.showErrorMessage(processAccedRoom.message)
-          return
-        }
-
-        changeRoom(state.pendingRoomSelected)
-      }
-    }
-
-    const showDialogChangeRoom = (room: Room) => {
-      if (room.isPrivate) {
-        state.pendingRoomSelected = room
-        dialog.show = true
-        dialog.isAddRoom = false
-        dialog.isChangePrivateRoom = true
-        return
-      }
-      changeRoom(room)
-    }
-
-    const sendMessage = () => {
-      if (!state.socketIOClient) {
-        return
-      }
-      state.socketIOClient.emit(
-        SocketIOEventName.MessageRoom,
-        state.messageToSend
-      )
-      const newMsg = {
-        text: state.messageToSend,
-        sendAt: new Date().toISOString(),
-        owner: myUsername
-      }
-      state.messages = [...state.messages, newMsg]
-    }
-
-    const loadMore = async () => {
-      pagination.page += 1
-      pagination.skip =
-        pagination.limit * pagination.page -
-        pagination.limit
-      await getMessages()
-    }
-
-    const messageInfiniteScrolling = async () => {
-      const element = document.querySelector('#messagesList')
-      if (element && element.scrollTop === 0 && pagination.moreAvailable) {
-        try {
-          await loadMore()
-          element.scroll({
-            top: 95 * 4,
-            left: 0,
-            behavior: 'smooth'
-          })
-        } catch (error) {
-          dialogMananger.showErrorMessage(error.message)
-        }
-      }
     }
 
     const messagesScrolling = throttle(messageInfiniteScrolling, 500)
@@ -401,35 +238,6 @@ export default defineComponent({
       router.push({
         name: 'Login'
       })
-    }
-
-    const showDialogCreateRoom = () => {
-      dialog.show = true
-      dialog.isAddRoom = true
-      dialog.isChangePrivateRoom = false
-    }
-
-    const acceptAddRoom = async ({
-      value,
-      name,
-      isPrivate,
-      password
-    }: AddRoomResult) => {
-      dialog.show = false
-
-      if (value && state.socketIOClient) {
-        const processAddNewRoom = await createNewRoom(
-          name,
-          isPrivate,
-          password
-        )
-        if (processAddNewRoom.error) {
-          dialogMananger.showErrorMessage(processAddNewRoom.message)
-          return
-        }
-
-        state.socketIOClient.emit(SocketIOEventName.CreateRoom, processAddNewRoom.value)
-      }
     }
 
     onBeforeUnmount(() => {
