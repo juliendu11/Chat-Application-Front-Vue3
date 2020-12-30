@@ -1,6 +1,6 @@
 const parseEnvToBoolean = (val: string | undefined): boolean => {
   if (val !== null && val !== undefined) {
-    return (val == 'true')
+    return (val === 'true')
   }
 
   return false

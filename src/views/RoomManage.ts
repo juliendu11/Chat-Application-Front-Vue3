@@ -1,6 +1,3 @@
-import { reactive } from 'vue'
-
-import Dialog from '@/interfaces/Dialog'
 import ChangePrivateRoomResult from '@/interfaces/DialogResult/ChangePrivateRoom'
 import AddRoomResult from '@/interfaces/DialogResult/AddRoom'
 import Room from '@/interfaces/Room'
@@ -15,58 +12,52 @@ import DialogManager from '@/classes/DialogManager'
 
 import SocketIOEventName from '@/enums/SocketIOEventName'
 
-const RoomManage = (state: any, getMessages: Function, dialogManager: DialogManager) => {
-  const dialog = reactive<Dialog>({
-    show: false,
-    isAddRoom: false,
-    isChangePrivateRoom: false
-  })
-
+const RoomManage = (state: Function, dialog: Function, getMessages: Function, dialogManager: DialogManager) => {
   const changeRoom = async (room: Room) => {
-    if (!state.socketIOClient) {
+    if (!state().socketIOClient) {
       return
     }
-    state.messages = []
-    state.roomSelected = room
+    state().messages = []
+    state().roomSelected = room
     await getMessages()
 
-    state.socketIOClient.emit(
+    state().socketIOClient.emit(
       SocketIOEventName.ChangeRoom,
-      state.roomSelected.name
+      state().roomSelected.name
     )
   }
 
-  const acceptChangeRoom = async (dialogManager: DialogManager, {
+  const acceptChangeRoom = async ({
     value,
     password
   }: ChangePrivateRoomResult) => {
-    dialog.show = false
-    if (value && state.socketIOClient && state.pendingRoomSelected) {
-      const processAccedRoom = await accedRoom(state.pendingRoomSelected.name, password, state.socketIOClient.id)
+    dialog().show = false
+    if (value && state().socketIOClient && state().pendingRoomSelected) {
+      const processAccedRoom = await accedRoom(state().pendingRoomSelected.name, password, state().socketIOClient.id)
       if (processAccedRoom.error) {
         dialogManager.showErrorMessage(processAccedRoom.message)
         return
       }
 
-      changeRoom(state.pendingRoomSelected)
+      changeRoom(state().pendingRoomSelected)
     }
   }
 
   const showDialogChangeRoom = (room: Room) => {
     if (room.isPrivate) {
-      state.pendingRoomSelected = room
-      dialog.show = true
-      dialog.isAddRoom = false
-      dialog.isChangePrivateRoom = true
+      state().pendingRoomSelected = room
+      dialog().show = true
+      dialog().isAddRoom = false
+      dialog().isChangePrivateRoom = true
       return
     }
     changeRoom(room)
   }
 
   const showDialogCreateRoom = () => {
-    dialog.show = true
-    dialog.isAddRoom = true
-    dialog.isChangePrivateRoom = false
+    dialog().show = true
+    dialog().isAddRoom = true
+    dialog().isChangePrivateRoom = false
   }
 
   const acceptAddRoom = async ({
@@ -75,9 +66,9 @@ const RoomManage = (state: any, getMessages: Function, dialogManager: DialogMana
     isPrivate,
     password
   }: AddRoomResult) => {
-    dialog.show = false
+    dialog().show = false
 
-    if (value && state.socketIOClient) {
+    if (value && state().socketIOClient) {
       const processAddNewRoom = await createNewRoom(
         name,
         isPrivate,
@@ -88,7 +79,7 @@ const RoomManage = (state: any, getMessages: Function, dialogManager: DialogMana
         return
       }
 
-      state.socketIOClient.emit(SocketIOEventName.CreateRoom, processAddNewRoom.value)
+      state().socketIOClient.emit(SocketIOEventName.CreateRoom, processAddNewRoom.value)
     }
   }
 
@@ -99,7 +90,7 @@ const RoomManage = (state: any, getMessages: Function, dialogManager: DialogMana
         dialogManager.showErrorMessage(message)
         return
       }
-      state.rooms = value
+      state().rooms = value
     } catch (error) {
       dialogManager.showErrorMessage(error.message)
     }

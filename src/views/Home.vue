@@ -173,7 +173,7 @@ export default defineComponent({
       messageInfiniteScrolling,
       sendMessage
     } = MessageManager(
-      state,
+      () => state,
       pagination,
       dialogMananger,
       myUsername)
@@ -186,14 +186,15 @@ export default defineComponent({
       acceptAddRoom,
       getAllRooms
     } = RoomManager(
-      state,
+      () => state,
+      () => dialog,
       getMessages,
       dialogMananger)
 
     const {
       createSocketIOClient
     } = SocketManager(
-      state,
+      () => state,
       dialogMananger,
       changeRoom)
 

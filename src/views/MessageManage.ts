@@ -8,11 +8,11 @@ import {
   getRoomMessages
 } from '@/services/api.service'
 
-const messageManager = (state: any, pagination: Pagination, dialogManager: DialogManager, myUsername: string) => {
+const messageManager = (state: Function, pagination: Pagination, dialogManager: DialogManager, myUsername: string) => {
   const getMessages = async () => {
-    if (!state.roomSelected) return
+    if (!state().roomSelected) return
     const { error, message, value } = await getRoomMessages(
-      state.roomSelected.name,
+      state().roomSelected.name,
       pagination.skip,
       pagination.limit
     )
@@ -20,7 +20,7 @@ const messageManager = (state: any, pagination: Pagination, dialogManager: Dialo
       dialogManager.showErrorMessage(message)
       return
     }
-    state.messages = [...state.messages, ...value.messages]
+    state().messages = [...state().messages, ...value.messages]
     pagination.moreAvailable = value.moreAvailable
   }
 
@@ -49,20 +49,20 @@ const messageManager = (state: any, pagination: Pagination, dialogManager: Dialo
   }
 
   const sendMessage = () => {
-    if (!state.socketIOClient) {
+    if (!state().socketIOClient) {
       return
     }
-    state.socketIOClient.emit(
+    state().socketIOClient.emit(
       SocketIOEventName.MessageRoom,
-      state.messageToSend
+      state().messageToSend
     )
-    state.messageToSend = ''
     const newMsg = {
-      text: state.messageToSend,
+      text: state().messageToSend,
       sendAt: new Date().toISOString(),
       owner: myUsername
     }
-    state.messages = [...state.messages, newMsg]
+    state().messages = [...state().messages, newMsg]
+    state().messageToSend = ''
   }
 
   return {

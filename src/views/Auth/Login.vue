@@ -12,8 +12,10 @@
           </template>
           <template v-slot:content>
             <div class="form-control">
+              <label for="id">Usernme or email:</label>
               <Field
                 name="id"
+                id="id"
                 type="text"
                 v-model="state.id"
                 :class="{ 'is-invalid': errors.id }"
@@ -21,9 +23,11 @@
               <div class="invalid-feedback">{{ errors.id }}</div>
             </div>
             <div class="form-control">
+              <label for="password">Password:</label>
               <Field
                 name="password"
                 type="password"
+                id="password"
                 v-model="state.password"
                 :class="{ 'is-invalid': errors.password }"
               />
