@@ -10,6 +10,11 @@
     display: grid;
     grid-template-columns: minmax(150px, 20%) 1fr;
     column-gap: 50px;
+
+    @media only screen and (max-width: 693px) {
+        grid-template-columns: 1fr;
+        row-gap: 20px;
+    }
 }
 
 .direct-chat-rooms-list,
@@ -89,6 +94,10 @@
 
     img {
         margin: 0 10px;
+
+        @media only screen and (max-width: var(--mobile-break)) {
+            display: none;
+        }
     }
 }
 

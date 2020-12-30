@@ -1,7 +1,8 @@
 <template>
-  <div v-show="state.showAddRoomDialog" class="dialog-backdrop"></div>
-  <div v-show="state.showAddRoomDialog" class=" dialog-container ">
-    <AddRoom @accept="acceptAddRoom"/>
+    <div v-show="dialog.show" class="dialog-backdrop"></div>
+  <div v-show="dialog.show" class="dialog-container">
+    <AddRoom v-if="dialog.isAddRoom" @accept="acceptAddRoom" />
+    <ChangePrivateRoom v-if="dialog.isChangePrivateRoom" @accept="acceptChangeRoom"/>
   </div>
   <div class="home-page">
     <div class="container">
@@ -32,7 +33,7 @@
                   :class="
                     state.roomSelected === room ? 'btn-primary' : 'btn-light'
                   "
-                  @click.prevent="changeRoom(room)"
+                  @click.prevent="showDialogChangeRoom(room)"
                   >{{ room.name }}</a
                 >
                 <div class="direct-chat-members-list">
@@ -95,7 +96,8 @@ import {
   getCurrentInstance,
   reactive,
   ref,
-  watch
+  watch,
+  onBeforeUnmount
 } from 'vue'
 import { io } from 'socket.io-client'
 import { useRouter } from 'vue-router'
@@ -104,28 +106,35 @@ import {
   getRooms,
   refreshToken,
   getRoomMessages,
-  createNewRoom
+  createNewRoom,
+  accedRoom
 } from '@/services/api.service'
 import { updateToken, getToken, clearToken } from '@/services/token.service'
 
 import { REFRESH_JWT_TIME, SOCKET_IO_URL } from '@/config'
+
 import DialogManager from '@/classes/DialogManager'
+import SocketError from '@/classes/SocketError'
 
 import SocketIOEventName from '@/enums/SocketIOEventName'
+import SocketIOErrorName from '@/enums/SocketIOErrorName'
 
 import MessageCard from '@/components/MessageCard.vue'
 import AddRoom from '@/components/Dialogs/AddRoom.vue'
+import ChangePrivateRoom from '@/components/Dialogs/ChangePrivateRoom.vue'
 
 import Message from '@/interfaces/Message'
 import MemberOnline from '@/interfaces/MemberOnline'
 import AddRoomResult from '@/interfaces/DialogResult/AddRoom'
+import ChangePrivateRoomResult from '@/interfaces/DialogResult/ChangePrivateRoom'
 import HomeState from '@/interfaces/HomeState'
 import Pagination from '@/interfaces/Pagination'
+import Dialog from '@/interfaces/Dialog'
 import Room from '@/interfaces/Room'
 
 export default defineComponent({
   name: 'Home',
-  components: { MessageCard, AddRoom },
+  components: { MessageCard, AddRoom, ChangePrivateRoom },
   setup () {
     const instance = getCurrentInstance()
     const router = useRouter()
@@ -140,10 +149,16 @@ export default defineComponent({
       rooms: [],
       onlineMembers: [],
       roomSelected: null,
+      pendingRoomSelected: null,
       socketIOClient: null,
       messages: [],
-      messageToSend: '',
-      showAddRoomDialog: false
+      messageToSend: ''
+    })
+
+    const dialog = reactive<Dialog>({
+      show: false,
+      isAddRoom: false,
+      isChangePrivateRoom: false
     })
 
     const pagination = reactive<Pagination>({
@@ -183,7 +198,6 @@ export default defineComponent({
         }
         state.rooms = value
       } catch (error) {
-        console.log(error)
         dialogMananger.showErrorMessage(error.message)
       }
     }
@@ -197,6 +211,26 @@ export default defineComponent({
         }
         updateToken(value)
       }, REFRESH_JWT_TIME * 60 * 1000)
+    }
+
+    const changeRoom = async (room: Room) => {
+      if (!state.socketIOClient) {
+        return
+      }
+      state.roomSelected = room
+      await getMessages()
+
+      state.socketIOClient.emit(
+        SocketIOEventName.ChangeRoom,
+        state.roomSelected.name
+      )
+    }
+
+    const handleSocketIOError = (socketError: SocketError) => {
+      dialogMananger.showErrorMessage(socketError.Message, socketError.Errorname)
+      if (socketError.Errorname === SocketIOErrorName.Unauthorized) {
+        changeRoom(state.rooms[0])
+      }
     }
 
     const setSocketIOEventHandler = () => {
@@ -241,6 +275,9 @@ export default defineComponent({
       state.socketIOClient.on(SocketIOEventName.CreateRoom, (room: Room) => {
         state.rooms = [...state.rooms, room]
       })
+      state.socketIOClient.on(SocketIOEventName.Error, (socketError: SocketError) => {
+        handleSocketIOError(socketError)
+      })
     }
 
     const createSocketIOClient = () => {
@@ -263,17 +300,31 @@ export default defineComponent({
       }
     }
 
-    const changeRoom = async (room: Room) => {
-      if (!state.socketIOClient) {
+    const acceptChangeRoom = async ({
+      value,
+      password
+    }: ChangePrivateRoomResult) => {
+      dialog.show = false
+      if (value && state.socketIOClient && state.pendingRoomSelected) {
+        const processAccedRoom = await accedRoom(state.pendingRoomSelected.name, password, state.socketIOClient.id)
+        if (processAccedRoom.error) {
+          dialogMananger.showErrorMessage(processAccedRoom.message)
+          return
+        }
+
+        changeRoom(state.pendingRoomSelected)
+      }
+    }
+
+    const showDialogChangeRoom = (room: Room) => {
+      if (room.isPrivate) {
+        state.pendingRoomSelected = room
+        dialog.show = true
+        dialog.isAddRoom = false
+        dialog.isChangePrivateRoom = true
         return
       }
-      state.roomSelected = room
-      await getMessages()
-
-      state.socketIOClient.emit(
-        SocketIOEventName.ChangeRoom,
-        state.roomSelected.name
-      )
+      changeRoom(room)
     }
 
     const sendMessage = () => {
@@ -323,24 +374,48 @@ export default defineComponent({
     }
 
     const showDialogCreateRoom = () => {
-      state.showAddRoomDialog = true
+      dialog.show = true
+      dialog.isAddRoom = true
+      dialog.isChangePrivateRoom = false
     }
 
-    const acceptAddRoom = async ({ value, name, isPrivate, password }: AddRoomResult) => {
-      state.showAddRoomDialog = false
-      if (value) {
-        const processAddNewRoom = await createNewRoom(name, isPrivate, password)
+    const acceptAddRoom = async ({
+      value,
+      name,
+      isPrivate,
+      password
+    }: AddRoomResult) => {
+      dialog.show = false
+
+      if (value && state.socketIOClient) {
+        const processAddNewRoom = await createNewRoom(
+          name,
+          isPrivate,
+          password
+        )
+        if (processAddNewRoom.error) {
+          dialogMananger.showErrorMessage(processAddNewRoom.message)
+          return
+        }
+
+        state.socketIOClient.emit(SocketIOEventName.CreateRoom, processAddNewRoom.value)
       }
     }
 
+    onBeforeUnmount(() => {
+      clearInterval(refreshTokenTimer.value)
+    })
+
     return {
       state,
-      changeRoom,
+      showDialogChangeRoom,
       sendMessage,
       myUsername,
       logout,
       showDialogCreateRoom,
-      acceptAddRoom
+      acceptAddRoom,
+      dialog,
+      acceptChangeRoom
     }
   }
 })

@@ -21,7 +21,9 @@
                 placeholder="Password"
                 autocomplete="current-password"
               />
-              <a
+            </div>
+            <div class="form-control">
+               <a
                 href="#"
                 class="btn btn-small btn-light"
                 @click="gotoForgotPassword"

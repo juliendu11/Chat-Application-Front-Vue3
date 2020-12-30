@@ -12,6 +12,8 @@ enum SocketIOEventName {
      Message = 'message',
      ChangeRoom = 'change-room',
      CreateRoom = 'create-room',
+
+    Error='error'
 }
 
 export default SocketIOEventName

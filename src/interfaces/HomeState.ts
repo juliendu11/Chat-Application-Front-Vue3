@@ -7,10 +7,10 @@ interface HomeState{
     rooms: Room[] | [];
     onlineMembers: MemberOnline[];
     roomSelected: Room |null;
+    pendingRoomSelected: Room |null;
     socketIOClient: Socket |null;
     messages: Message[] | [];
     messageToSend: string;
-    showAddRoomDialog: boolean;
 }
 
 export default HomeState

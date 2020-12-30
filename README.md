@@ -15,11 +15,12 @@ The back part is here: https://github.com/juliendu11/Chat-Application-Back-Expre
 - [] Sending image
 - [X] Add env for API URL
 - [] Add support push notification (PWA)
-- [] Email format vérification for Auth page
+- [] Email format verification for Auth page
 - [] Add retype password for register page
 - [X] Add users list connected per room
-- [] Add logout
+- [X] Add logout
 - [] Load more messages when scroll in TOP
+- [X] Private room
 
 ## Project setup
 ```

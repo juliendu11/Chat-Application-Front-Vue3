@@ -166,7 +166,8 @@ const createNewRoom = async (roomName: string, isPrivate: boolean, password: str
   const { error, message, value } = await requestHandler(API_URL + '/room', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      authorization: 'Bearer ' + getToken()
     },
     body: JSON.stringify({
       roomName,
@@ -182,6 +183,26 @@ const createNewRoom = async (roomName: string, isPrivate: boolean, password: str
   }
 }
 
+const accedRoom = async (roomName: string, password: string, socketId: string): Promise<APIResponse> => {
+  const { error, message } = await requestHandler(API_URL + '/room/' + roomName, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      authorization: 'Bearer ' + getToken()
+    },
+    body: JSON.stringify({
+      roomName,
+      password,
+      socketId
+    })
+  })
+
+  return {
+    error,
+    message
+  }
+}
+
 export {
   login,
   register,
@@ -191,5 +212,6 @@ export {
   getRooms,
   refreshToken,
   getRoomMessages,
-  createNewRoom
+  createNewRoom,
+  accedRoom
 }
