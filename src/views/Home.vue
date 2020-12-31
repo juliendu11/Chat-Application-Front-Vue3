@@ -1,9 +1,9 @@
 <template>
     <div v-show="dialog.show" class="dialog-backdrop"></div>
-  <div v-show="dialog.show" class="dialog-container">
-    <AddRoom v-if="dialog.isAddRoom" @accept="acceptAddRoom" />
-    <ChangePrivateRoom v-if="dialog.isChangePrivateRoom" @accept="acceptChangeRoom"/>
-  </div>
+    <div v-show="dialog.show" class="dialog-container">
+      <AddRoom v-if="dialog.isAddRoom" @accept="acceptAddRoom" />
+      <ChangePrivateRoom v-if="dialog.isChangePrivateRoom" @accept="acceptChangeRoom"/>
+    </div>
   <div class="home-page">
     <div class="container">
       <div class="nav-bar">

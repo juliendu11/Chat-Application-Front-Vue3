@@ -43,7 +43,7 @@ const RoomManage = (state: Function, dialog: Function, getMessages: Function, di
     }
   }
 
-  const showDialogChangeRoom = (room: Room) => {
+  const showDialogChangeRoom = async (room: Room) => {
     if (room.isPrivate) {
       state().pendingRoomSelected = room
       dialog().show = true
@@ -51,7 +51,7 @@ const RoomManage = (state: Function, dialog: Function, getMessages: Function, di
       dialog().isChangePrivateRoom = true
       return
     }
-    changeRoom(room)
+    await changeRoom(room)
   }
 
   const showDialogCreateRoom = () => {
