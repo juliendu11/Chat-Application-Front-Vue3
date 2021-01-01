@@ -4,12 +4,12 @@ An example of a Chat application in JS with room management registration and rea
 
 The back part is here: https://github.com/juliendu11/Chat-Application-Back-Express (it's Express and Socket.io in typescript)
 
-![](./public/app/1-min.png)
-![](./public/app/2-min.png)
-![](./public/app/3-min.png)
-![](./public/app/4-min.png)
-![](./public/app/5-min.png)
-![](./public/app/6-min.png)
+<img src="./public/app/2-min.png" width="900" height="500">
+<img src="./public/app/1-min.png" width="900" height="500">
+<img src="./public/app/3-min.png" width="900" height="500">
+<img src="./public/app/4-min.png" width="900" height="500">
+<img src="./public/app/5-min.png" width="900" height="500">
+<img src="./public/app/6-min.png" width="900" height="500">
 
 ## TODO
 
